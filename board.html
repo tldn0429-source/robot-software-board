@@ -66,7 +66,7 @@
         <div id="view-list">
             <div class="board-header">
                 <h2>자유게시판</h2>
-                <button class="btn btn-primary" onclick="showWriteView()">글쓰기</button>
+                <button class="btn btn-primary" onclick="window.showWriteView()">글쓰기</button>
             </div>
             <table class="board-table">
                 <thead>
@@ -87,9 +87,9 @@
         <div id="view-write">
             <div class="board-header">
                 <h2 id="write-title">게시글 작성</h2>
-                <button class="btn btn-secondary" onclick="showListView()">목록으로</button>
+                <button class="btn btn-secondary" onclick="window.showListView()">목록으로</button>
             </div>
-            <form id="post-form" onsubmit="handlePostSubmit(event)">
+            <form id="post-form" onsubmit="window.handlePostSubmit(event)">
                 <input type="hidden" id="post-id" value="">
                 <div class="form-group">
                     <label>제목</label>
@@ -111,7 +111,7 @@
         <div id="view-detail">
             <div class="board-header">
                 <h2>자유게시판</h2>
-                <button class="btn btn-secondary" onclick="showListView()">목록으로</button>
+                <button class="btn btn-secondary" onclick="window.showListView()">목록으로</button>
             </div>
             <div class="post-detail" style="display: block;">
                 <h1 class="post-title" id="detail-title">제목</h1>
@@ -124,8 +124,8 @@
                 </div>
                 
                 <div class="post-actions">
-                    <button class="btn btn-secondary" onclick="editPost()">수정</button>
-                    <button class="btn btn-danger" onclick="deletePost()">삭제</button>
+                    <button class="btn btn-secondary" onclick="window.editPost()">수정</button>
+                    <button class="btn btn-danger" onclick="window.deletePost()">삭제</button>
                 </div>
 
                 <div class="comments-section">
@@ -133,7 +133,7 @@
                     <div id="comment-list">
                         <!-- Comments here -->
                     </div>
-                    <form class="comment-form" onsubmit="handleAddComment(event)">
+                    <form class="comment-form" onsubmit="window.handleAddComment(event)">
                         <input type="text" id="comment-input" class="form-control" required placeholder="댓글을 남겨보세요.">
                         <button type="submit" class="btn btn-primary">등록</button>
                     </form>
