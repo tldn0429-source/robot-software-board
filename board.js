@@ -19,6 +19,11 @@ const db = getFirestore(app);
 let posts = [];
 let currentPostId = null;
 
+// ==========================================
+// 💡 관리자용 마스터 비밀번호
+// ==========================================
+const ADMIN_PASSWORD = "admin"; 
+
 const viewList = document.getElementById('view-list');
 const viewWrite = document.getElementById('view-write');
 const viewDetail = document.getElementById('view-detail');
@@ -36,24 +41,34 @@ window.hideAll = function() {
 window.showListView = function() {
     window.hideAll();
     viewList.style.display = 'block';
+    // 게시글 목록 갱신
     window.renderPosts();
 };
 
 window.showWriteView = function(isEdit = false) {
     window.hideAll();
     viewWrite.style.display = 'block';
+    
     const titleEl = document.getElementById('write-title');
+    const pwGroup = document.getElementById('password-group');
+    const pwInput = document.getElementById('post-password-input');
     
     if (isEdit && currentPostId) {
         titleEl.innerText = "게시글 수정";
+        pwGroup.style.display = 'none'; // 수정 모드 전환 시에는 비번 입력창 숨김
+        pwInput.required = false;
+
         const post = posts.find(p => p.id === currentPostId);
         document.getElementById('post-id').value = post.id;
         document.getElementById('post-title-input').value = post.title;
         document.getElementById('post-author-input').value = post.author;
-        document.getElementById('post-author-input').disabled = true;
+        document.getElementById('post-author-input').disabled = true; // 수정 시 작성자는 고정
         document.getElementById('post-content-input').value = post.content;
     } else {
         titleEl.innerText = "게시글 작성";
+        pwGroup.style.display = 'block';
+        pwInput.required = true; // 새 글 작성할 때는 비번 필수
+
         document.getElementById('post-form').reset();
         document.getElementById('post-id').value = '';
         document.getElementById('post-author-input').disabled = false;
@@ -110,7 +125,7 @@ window.renderPosts = async function() {
         });
     } catch (e) {
         console.error("Firestore Read Error:", e);
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Firebase 데이터 조회 오류. 콘솔 로그를 확인하세요.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Firebase 데이터 조회 오류. 파이어베이스 규칙을 확인하세요.</td></tr>';
     }
 };
 
@@ -120,6 +135,7 @@ window.handlePostSubmit = async function(e) {
     const title = document.getElementById('post-title-input').value;
     const author = document.getElementById('post-author-input').value;
     const content = document.getElementById('post-content-input').value;
+    const password = document.getElementById('post-password-input').value;
     
     const today = new Date();
     const dateStr = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
@@ -130,6 +146,7 @@ window.handlePostSubmit = async function(e) {
     
     try {
         if (id) {
+            // 게시글 수정
             const postRef = doc(db, "posts", id);
             await updateDoc(postRef, {
                 title: title,
@@ -144,43 +161,76 @@ window.handlePostSubmit = async function(e) {
             }
             window.showDetailView(id);
         } else {
+            // 게시글 작성
             await addDoc(collection(db, "posts"), {
                 title: title,
                 author: author,
                 content: content,
                 date: dateStr,
                 comments: [],
-                timestamp: today.getTime()
+                timestamp: today.getTime(),
+                password: password || "" // 💡 비밀번호 암호 없이 저장 (현 단계 구조)
             });
             alert("작성 완료!");
             window.showListView();
         }
     } catch(e) {
         console.error("Firestore Write Error:", e);
-        alert("저장에 실패했습니다. 관리자 모드 권한이나 규칙을 확인해보세요.");
+        alert("저장에 실패했습니다. 관리자 모드 권한이나 파이어베이스 규칙을 확인해보세요.");
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = "저장하기";
     }
 };
 
+// ==========================================
+// 💡 기능: 게시글 수정 & 검증
+// ==========================================
 window.editPost = function() {
-    window.showWriteView(true);
-};
-
-window.deletePost = async function() {
-    if(confirm('이 글을 정말 삭제하시겠습니까?')) {
-        try {
-            await deleteDoc(doc(db, "posts", currentPostId));
-            alert("정상적으로 삭제되었습니다.");
-            window.showListView();
-        } catch(e) {
-            console.error("Firestore Delete Error:", e);
-            alert("삭제에 실패했습니다.");
-        }
+    const post = posts.find(p => p.id === currentPostId);
+    if (!post) return;
+    
+    const inputPw = prompt("게시글 수정\n작성 시 입력했던 [비밀번호]를 입력하세요.\n(관리자는 'admin' 입력)");
+    if (inputPw === null) return; // 취소
+    
+    // 검증: 본인 비밀번호이거나, 관리자 비밀번호인 경우 접근 허용
+    if (inputPw === post.password || inputPw === ADMIN_PASSWORD) {
+        window.showWriteView(true);
+    } else {
+        alert("비밀번호가 일치하지 않습니다!");
     }
 };
 
+// ==========================================
+// 💡 기능: 게시글 삭제 & 검증
+// ==========================================
+window.deletePost = async function() {
+    const post = posts.find(p => p.id === currentPostId);
+    if (!post) return;
+    
+    const inputPw = prompt("게시글 삭제\n작성 시 입력했던 [비밀번호]를 입력하세요.\n(관리자는 'admin' 입력)");
+    if (inputPw === null) return; // 취소
+    
+    // 검증: 본인 비밀번호이거나, 관리자 비밀번호인 경우 접근 허용
+    if (inputPw === post.password || inputPw === ADMIN_PASSWORD) {
+        if(confirm('정말로 이 게시글 전체를 삭제하시겠습니까?')) {
+            try {
+                await deleteDoc(doc(db, "posts", currentPostId));
+                alert("정상적으로 삭제되었습니다.");
+                window.showListView();
+            } catch(e) {
+                console.error("Firestore Delete Error:", e);
+                alert("삭제 처리에 실패했습니다.");
+            }
+        }
+    } else {
+        alert("비밀번호가 일치하지 않습니다.");
+    }
+};
+
+// ==========================================
+// 💡 기능: 댓글 관련 로직
+// ==========================================
 window.renderComments = function(post) {
     const list = document.getElementById('comment-list');
     list.innerHTML = '';
@@ -190,9 +240,12 @@ window.renderComments = function(post) {
     comments.forEach(c => {
         const div = document.createElement('div');
         div.className = 'comment-item';
+        // 댓글 항목에 삭제 버튼 추가 (비밀번호 체크)
         div.innerHTML = `
             <span><b>${c.author}</b>: ${c.text}</span>
-            <span class="comment-actions" onclick="window.deleteComment(${c.id})">삭제</span>
+            <span class="comment-actions" style="margin-left:auto;">
+                <button class="btn btn-secondary" style="padding:0.2rem 0.5rem; font-size:0.8rem;" onclick="window.deleteComment(${c.id}, event)">삭제</button>
+            </span>
         `;
         list.appendChild(div);
     });
@@ -201,7 +254,13 @@ window.renderComments = function(post) {
 window.handleAddComment = async function(e) {
     e.preventDefault();
     const input = document.getElementById('comment-input');
+    const authorInput = document.getElementById('comment-author');
+    const passwordInput = document.getElementById('comment-password');
+    
     const text = input.value.trim();
+    const author = authorInput.value.trim() || "익명";
+    const password = passwordInput.value.trim();
+    
     if(!text) return;
     
     const post = posts.find(p => p.id === currentPostId);
@@ -209,7 +268,8 @@ window.handleAddComment = async function(e) {
         const newComment = {
             id: new Date().getTime(),
             text: text,
-            author: "익명"
+            author: author,
+            password: password
         };
         
         const updatedComments = post.comments ? [...post.comments, newComment] : [newComment];
@@ -219,8 +279,12 @@ window.handleAddComment = async function(e) {
             await updateDoc(postRef, {
                 comments: updatedComments
             });
-            post.comments = updatedComments;
+            post.comments = updatedComments; // 로컬 최신화
+            
+            // 폼 초기화
             input.value = '';
+            authorInput.value = '';
+            passwordInput.value = '';
             window.renderComments(post);
         } catch(e) {
             console.error("Firestore Comment Error:", e);
@@ -229,10 +293,25 @@ window.handleAddComment = async function(e) {
     }
 };
 
-window.deleteComment = async function(commentId) {
-    if(!confirm('이 댓글을 삭제할까요?')) return;
+window.deleteComment = async function(commentId, event) {
+    if(event) event.stopPropagation();
+    
     const post = posts.find(p => p.id === currentPostId);
-    if(post) {
+    if(!post) return;
+    
+    const targetComment = post.comments.find(c => c.id === commentId);
+    if(!targetComment) return;
+    
+    const inputPw = prompt("댓글 삭제: 댓글 작성 시 설정한 [비밀번호]를 입력하세요.\n(관리팀은 'admin' 입력)");
+    if(inputPw === null) return;
+    
+    // 댓글 삭제 권한 검증: 댓글 비번 동일 OR 게시글 관리자 기능 (관리자는 모든 게시글/댓글 삭제 가능)
+    const isValid = (targetComment.password && inputPw === targetComment.password) || 
+                    (inputPw === ADMIN_PASSWORD);
+                    
+    if(isValid) {
+        if(!confirm('이 댓글을 삭제할까요?')) return;
+        
         const updatedComments = post.comments.filter(c => c.id !== commentId);
         try {
             const postRef = doc(db, "posts", currentPostId);
@@ -245,5 +324,7 @@ window.deleteComment = async function(commentId) {
             console.error("Firestore Comment Delete Error:", e);
             alert("댓글 삭제에 실패했습니다.");
         }
+    } else {
+        alert("비밀번호가 일치하지 않습니다!");
     }
 };

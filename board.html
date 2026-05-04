@@ -99,6 +99,10 @@
                     <label>작성자</label>
                     <input type="text" id="post-author-input" class="form-control" required placeholder="이름을 입력하세요">
                 </div>
+                <div class="form-group" id="password-group">
+                    <label>비밀번호 (게시글 수정/삭제용)</label>
+                    <input type="password" id="post-password-input" class="form-control" required placeholder="비밀번호를 입력하세요">
+                </div>
                 <div class="form-group">
                     <label>내용</label>
                     <textarea id="post-content-input" class="form-control" rows="10" required placeholder="내용을 입력하세요"></textarea>
@@ -133,9 +137,15 @@
                     <div id="comment-list">
                         <!-- Comments here -->
                     </div>
-                    <form class="comment-form" onsubmit="window.handleAddComment(event)">
-                        <input type="text" id="comment-input" class="form-control" required placeholder="댓글을 남겨보세요.">
-                        <button type="submit" class="btn btn-primary">등록</button>
+                    <form class="comment-form" onsubmit="window.handleAddComment(event)" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:1rem; padding:1rem; border:1px solid #ddd; border-radius:8px;">
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="text" id="comment-author" class="form-control" style="width:30%;" required placeholder="닉네임">
+                            <input type="password" id="comment-password" class="form-control" style="width:30%;" required placeholder="비밀번호">
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="text" id="comment-input" class="form-control" style="flex:1;" required placeholder="댓글을 남겨보세요.">
+                            <button type="submit" class="btn btn-primary">등록</button>
+                        </div>
                     </form>
                 </div>
             </div>
