@@ -22,7 +22,7 @@ let currentPostId = null;
 // ==========================================
 // 💡 관리자용 마스터 비밀번호
 // ==========================================
-const ADMIN_PASSWORD = "admin"; 
+const ADMIN_PASSWORD = "0429"; 
 
 const viewList = document.getElementById('view-list');
 const viewWrite = document.getElementById('view-write');
@@ -190,7 +190,7 @@ window.editPost = function() {
     const post = posts.find(p => p.id === currentPostId);
     if (!post) return;
     
-    const inputPw = prompt("게시글 수정\n작성 시 입력했던 [비밀번호]를 입력하세요.\n(관리자는 'admin' 입력)");
+    const inputPw = prompt("게시글 수정\n작성 시 입력했던 [비밀번호]를 입력하세요.");
     if (inputPw === null) return; // 취소
     
     // 검증: 본인 비밀번호이거나, 관리자 비밀번호인 경우 접근 허용
@@ -208,7 +208,7 @@ window.deletePost = async function() {
     const post = posts.find(p => p.id === currentPostId);
     if (!post) return;
     
-    const inputPw = prompt("게시글 삭제\n작성 시 입력했던 [비밀번호]를 입력하세요.\n(관리자는 'admin' 입력)");
+    const inputPw = prompt("게시글 삭제\n작성 시 입력했던 [비밀번호]를 입력하세요.");
     if (inputPw === null) return; // 취소
     
     // 검증: 본인 비밀번호이거나, 관리자 비밀번호인 경우 접근 허용
@@ -302,7 +302,7 @@ window.deleteComment = async function(commentId, event) {
     const targetComment = post.comments.find(c => c.id === commentId);
     if(!targetComment) return;
     
-    const inputPw = prompt("댓글 삭제: 댓글 작성 시 설정한 [비밀번호]를 입력하세요.\n(관리팀은 'admin' 입력)");
+    const inputPw = prompt("댓글 삭제: 댓글 작성 시 설정한 [비밀번호]를 입력하세요.");
     if(inputPw === null) return;
     
     // 댓글 삭제 권한 검증: 댓글 비번 동일 OR 게시글 관리자 기능 (관리자는 모든 게시글/댓글 삭제 가능)
