@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자유게시판 - 로봇소프트웨어과</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+    <style>
+        .board-container { max-width: 1000px; margin: 3rem auto; padding: 2rem; background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+        .board-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 1rem; }
+        
+        .btn { padding: 0.6rem 1.2rem; border: none; border-radius: var(--radius-md); font-weight: 500; cursor: pointer; transition: var(--transition); }
+        .btn-primary { background: var(--primary-color); color: var(--white); }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: var(--bg-gray); color: var(--text-dark); }
+        .btn-secondary:hover { background: #ddd; }
+        .btn-danger { background: #ff4757; color: var(--white); }
+
+        .board-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .board-table th, .board-table td { padding: 1rem; border-bottom: 1px solid var(--bg-gray); }
+        .board-table th { background-color: var(--bg-light); color: var(--text-dark); }
+        .board-table tr:hover td { background-color: #fcfcfc; cursor: pointer; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-control { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: var(--radius-md); outline: none; }
+        .form-control:focus { border-color: var(--primary-color); }
+        
+        .post-detail { display: none; }
+        .post-title { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .post-meta { display: flex; gap: 1rem; color: #777; font-size: 0.9rem; margin-bottom: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 1rem; }
+        .post-body { min-height: 200px; line-height: 1.6; margin-bottom: 2rem; white-space: pre-wrap; }
+        .post-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-bottom: 2rem; }
+        
+        .comments-section { background: var(--bg-light); padding: 1.5rem; border-radius: var(--radius-md); }
+        .comment-item { padding: 1rem 0; border-bottom: 1px dashed #ccc; display: flex; justify-content: space-between; }
+        .comment-actions { color: #ff4757; cursor: pointer; font-size: 0.9rem; }
+        .comment-form { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        
+        /* Views */
+        #view-list { display: block; }
+        #view-write { display: none; }
+        #view-detail { display: none; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">로봇소프트웨어과</div>
+            <nav class="nav">
+                <a href="index.html">학과소개</a>
+                <a href="#">교육과정</a>
+                <a href="#">교수소개</a>
+                <a href="#">학과앨범</a>
+                <a href="#">학과공지</a>
+                <a href="#">전공동아리</a>
+                <a href="board.html" class="nav-highlight">자유게시판</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="board-container">
+        <!-- List View -->
+        <div id="view-list">
+            <div class="board-header">
+                <h2>자유게시판</h2>
+                <button class="btn btn-primary" onclick="showWriteView()">글쓰기</button>
+            </div>
+            <table class="board-table">
+                <thead>
+                    <tr>
+                        <th width="10%">번호</th>
+                        <th width="50%">제목</th>
+                        <th width="20%">작성자</th>
+                        <th width="20%">작성일</th>
+                    </tr>
+                </thead>
+                <tbody id="board-tbody">
+                    <!-- Posts inserted via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Write/Edit View -->
+        <div id="view-write">
+            <div class="board-header">
+                <h2 id="write-title">게시글 작성</h2>
+                <button class="btn btn-secondary" onclick="showListView()">목록으로</button>
+            </div>
+            <form id="post-form" onsubmit="handlePostSubmit(event)">
+                <input type="hidden" id="post-id" value="">
+                <div class="form-group">
+                    <label>제목</label>
+                    <input type="text" id="post-title-input" class="form-control" required placeholder="제목을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label>작성자</label>
+                    <input type="text" id="post-author-input" class="form-control" required placeholder="이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label>내용</label>
+                    <textarea id="post-content-input" class="form-control" rows="10" required placeholder="내용을 입력하세요"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">저장하기</button>
+            </form>
+        </div>
+
+        <!-- Detail View -->
+        <div id="view-detail">
+            <div class="board-header">
+                <h2>자유게시판</h2>
+                <button class="btn btn-secondary" onclick="showListView()">목록으로</button>
+            </div>
+            <div class="post-detail" style="display: block;">
+                <h1 class="post-title" id="detail-title">제목</h1>
+                <div class="post-meta">
+                    <span id="detail-author">작성자: 홍길동</span>
+                    <span id="detail-date">작성일: 2026.05.04</span>
+                </div>
+                <div class="post-body" id="detail-content">
+                    내용이 들어옵니다.
+                </div>
+                
+                <div class="post-actions">
+                    <button class="btn btn-secondary" onclick="editPost()">수정</button>
+                    <button class="btn btn-danger" onclick="deletePost()">삭제</button>
+                </div>
+
+                <div class="comments-section">
+                    <h3>댓글 (<span id="comment-count">0</span>)</h3>
+                    <div id="comment-list">
+                        <!-- Comments here -->
+                    </div>
+                    <form class="comment-form" onsubmit="handleAddComment(event)">
+                        <input type="text" id="comment-input" class="form-control" required placeholder="댓글을 남겨보세요.">
+                        <button type="submit" class="btn btn-primary">등록</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script type="module" src="board.js"></script>
+</body>
+</html>
